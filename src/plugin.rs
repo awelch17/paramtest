@@ -1,15 +1,19 @@
 
-use vst::plugin::{HostCallback, Info, Plugin};
+use vst::{editor::Editor, plugin::{HostCallback, Info, Plugin}};
+
+use crate::editor::ParamEditor;
 
 #[derive(Default)]
 pub struct ParamTest {
-    host: HostCallback
+    host: HostCallback,
+    editor_placeholder: Option<ParamEditor>
 }
 
 impl Plugin for ParamTest {
     fn new(host: HostCallback) -> ParamTest {
         return ParamTest {
-            host: host
+            host: host,
+            editor_placeholder: Some(ParamEditor::default())
         };
     }
     
@@ -37,5 +41,10 @@ impl Plugin for ParamTest {
         
     }
     
+    fn get_editor(&mut self) -> Option<Box<dyn Editor>> {
+        self.editor_placeholder
+            .take()
+            .map(|editor| Box::new(editor) as Box<dyn Editor>)
+    }
 }
 
