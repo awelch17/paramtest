@@ -2,7 +2,23 @@ use core::ffi::c_void;
 use vst::editor::Editor;
 use vst_window::{setup, EventSource, WindowEvent};
 
-use crate::renderer::ParamRenderer;
+use crate::{params::WINDOW_DIMENSIONS, renderer::ParamRenderer};
+
+
+fn create_param_renderer<W: raw_window_handle::HasRawWindowHandle>(handle: W) -> ParamRenderer {
+    let future = async move {
+        let res = ParamRenderer::new(handle).await;
+        res
+    };
+    
+    let res = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap()
+            .block_on(future);
+    res
+}
+
 
 #[derive(Default)]
 pub struct ParamEditor {
@@ -12,7 +28,7 @@ pub struct ParamEditor {
 
 impl Editor for ParamEditor {
     fn size(&self) -> (i32, i32) {
-        (640, 360)
+        (WINDOW_DIMENSIONS.0, WINDOW_DIMENSIONS.1)
     }
 
     fn position(&self) -> (i32, i32) {
@@ -21,8 +37,8 @@ impl Editor for ParamEditor {
 
     fn open(&mut self, parent: *mut c_void) -> bool {
         if self.window_events.is_none() {
-            let (window_handle, event_source) = setup(parent, (640, 360));
-            self.renderer = Some(ParamRenderer::new(window_handle));
+            let (window_handle, event_source) = setup(parent, WINDOW_DIMENSIONS);
+            self.renderer = Some(create_param_renderer(window_handle));
             self.window_events = Some(event_source);
             true
         } else {
